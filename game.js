@@ -944,7 +944,6 @@ function showWinModal() {
   const isBotWin = (G.mode==='medium'||G.mode==='hard') && w==='O';
   const isYouWin = G.mode==='online' && w===G.onlineColor;
 
-  document.getElementById('modalTrophy').textContent = isBotWin ? '🤖' : '🏆';
   document.getElementById('modalTitle').textContent  =
     isBotWin ? 'Bot Wins!' :
     G.mode==='online' ? (isYouWin ? 'You Win!' : 'Opponent Wins!') :
