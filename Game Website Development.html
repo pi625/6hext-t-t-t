@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Six in a Row — Hexagonal Strategy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   DESIGN TOKENS
+   ============================================================ */
+:root {
+  --bg:       #FDFAF5;
+  --surf:     #F4EDE0;
+  --surf2:    #EAE0CE;
+  --border:   #D0BFAA;
+  --text:     #27180E;
+  --muted:    #8A7563;
+  --xc:       #7C4A2D;
+  --xl:       #F2E4D8;
+  --oc:       #2D5A7C;
+  --ol:       #D6E8F2;
+  --threat:   #C0860A;
+  --win:      #4A8A2E;
+  --tr:       .3s cubic-bezier(.4,0,.2,1);
+  --rad:      12px;
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Jost', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+}
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 28px;
+  height: 58px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(253,250,245,.97);
+  backdrop-filter: blur(8px);
+  flex-shrink: 0;
+  z-index: 50;
+}
+
+.logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: .02em;
+  flex: 1;
+}
+.logo em { color: var(--xc); font-style: italic; }
+
+.pills {
+  display: flex;
+  background: var(--surf);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.pill {
+  padding: 6px 16px;
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+  cursor: pointer;
+  font: 400 .78rem 'Jost', sans-serif;
+  color: var(--muted);
+  transition: all var(--tr);
+  white-space: nowrap;
+}
+.pill.on {
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: 0 1px 6px rgba(0,0,0,.08);
+}
+.pill:hover:not(.on) { color: var(--text); }
+
+.btn-new {
+  padding: 8px 22px;
+  background: var(--xc);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  font: 500 .8rem 'Jost', sans-serif;
+  letter-spacing: .04em;
+  transition: all var(--tr);
+}
+.btn-new:hover {
+  background: #663B22;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(124,74,45,.28);
+}
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+aside {
+  width: 210px;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 14px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+aside::-webkit-scrollbar { display: none; }
+
+/* Player cards */
+.pcard {
+  border: 1.5px solid var(--border);
+  border-radius: var(--rad);
+  padding: 13px 14px;
+  background: var(--surf);
+  transition: all var(--tr);
+}
+.pcard.act-x { border-color: var(--xc); background: var(--xl); }
+.pcard.act-o { border-color: var(--oc); background: var(--ol); }
+
+.pcard-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.pcard-icon {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font: 600 .85rem 'Cormorant Garamond', serif;
+  color: #fff;
+  flex-shrink: 0;
+  transition: all var(--tr);
+}
+.px .pcard-icon { background: var(--xc); }
+.po .pcard-icon { background: var(--oc); }
+
+.pcard-name {
+  font: 600 .92rem 'Cormorant Garamond', serif;
+  flex: 1;
+}
+.px .pcard-name { color: var(--xc); }
+.po .pcard-name { color: var(--oc); }
+
+.pcard-sub {
+  font-size: .72rem;
+  color: var(--muted);
+  margin-bottom: 9px;
+  height: 1.3em;
+}
+
+.dots {
+  display: flex;
+  gap: 5px;
+}
+.dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: all var(--tr);
+}
+.dot.x { background: var(--xc); box-shadow: 0 0 0 2px rgba(124,74,45,.2); }
+.dot.o { background: var(--oc); box-shadow: 0 0 0 2px rgba(45,90,124,.2); }
+
+/* Info boxes */
+.ibox {
+  padding: 11px 13px;
+  background: var(--surf);
+  border: 1px solid var(--border);
+  border-radius: var(--rad);
+  font-size: .78rem;
+  color: var(--muted);
+}
+.ibox strong {
+  display: block;
+  font: 500 .64rem 'Jost', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  margin-bottom: 4px;
+  color: var(--muted);
+}
+.ibox span { color: var(--text); font-size: .85rem; }
+
+/* Momentum bar */
+.momentum-wrap {
+  padding: 11px 13px;
+  background: var(--surf);
+  border: 1px solid var(--border);
+  border-radius: var(--rad);
+}
+.momentum-label {
+  font: 500 .64rem 'Jost', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--muted);
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.momentum-bar-track {
+  height: 6px;
+  background: var(--surf2);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.momentum-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--xc), var(--oc));
+  border-radius: 99px;
+  width: 50%;
+  transition: width .6s cubic-bezier(.4,0,.2,1);
+}
+.momentum-names {
+  display: flex;
+  justify-content: space-between;
+  font-size: .65rem;
+  color: var(--muted);
+  margin-top: 5px;
+}
+
+/* Rules */
+.rules {
+  margin-top: auto;
+  padding: 12px 13px;
+  background: var(--surf);
+  border: 1px solid var(--border);
+  border-radius: var(--rad);
+}
+.rules-title {
+  font: 600 .88rem 'Cormorant Garamond', serif;
+  margin-bottom: 9px;
+  color: var(--text);
+}
+.rules ul { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+.rules li {
+  font-size: .71rem;
+  color: var(--muted);
+  padding-left: 12px;
+  position: relative;
+  line-height: 1.4;
+}
+.rules li::before {
+  content: '·';
+  position: absolute;
+  left: 1px;
+  color: var(--xc);
+  font-size: 1.1rem;
+  line-height: .9;
+}
+
+/* ============================================================
+   CANVAS AREA
+   ============================================================ */
+.canvas-wrap {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  cursor: crosshair;
+}
+canvas {
+  display: block;
+  position: absolute;
+  top: 0; left: 0;
+}
+
+/* HUD overlays */
+.hud {
+  position: absolute;
+  font-size: .68rem;
+  color: var(--muted);
+  background: rgba(253,250,245,.92);
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+  transition: opacity var(--tr);
+}
+.hud-br { bottom: 14px; right: 14px; }
+.hud-bl { bottom: 14px; left: 14px; display: flex; gap: 10px; align-items: center; }
+.legend-dot {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* Bot thinking indicator */
+.thinking-badge {
+  position: absolute;
+  top: 14px; left: 50%;
+  transform: translateX(-50%);
+  background: rgba(253,250,245,.95);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 18px;
+  font-size: .76rem;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--tr);
+}
+.thinking-badge.show { opacity: 1; }
+.thinking-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--oc);
+  animation: blink 1s ease-in-out infinite;
+}
+@keyframes blink {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: .4; transform: scale(.7); }
+}
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(39,24,14,.38);
+  backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--tr);
+}
+.overlay.show { opacity: 1; pointer-events: all; }
+
+.modal {
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 22px;
+  padding: 48px 56px;
+  text-align: center;
+  max-width: 380px;
+  width: 92%;
+  box-shadow: 0 24px 72px rgba(0,0,0,.13);
+  transform: scale(.91) translateY(18px);
+  transition: transform var(--tr);
+}
+.overlay.show .modal { transform: scale(1) translateY(0); }
+
+.modal-trophy {
+  font-size: 2.8rem;
+  margin-bottom: 12px;
+}
+.modal-title {
+  font: 600 2.4rem 'Cormorant Garamond', serif;
+  line-height: 1.1;
+  margin-bottom: 8px;
+}
+.modal-sub {
+  color: var(--muted);
+  font-size: .86rem;
+  margin-bottom: 30px;
+  line-height: 1.55;
+}
+.modal-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.mbtn {
+  padding: 11px 28px;
+  border: none; border-radius: 999px;
+  cursor: pointer;
+  font: 500 .86rem 'Jost', sans-serif;
+  letter-spacing: .04em;
+  transition: all var(--tr);
+}
+.mbtn.primary { background: var(--xc); color: #fff; }
+.mbtn.primary:hover {
+  background: #663B22;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(124,74,45,.3);
+}
+.mbtn.sec { background: var(--surf2); color: var(--text); }
+.mbtn.sec:hover { background: var(--border); }
+
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     HEADER
+     ============================================================ -->
+<header>
+  <div class="logo">Six in a <em>Row</em></div>
+
+  <div class="pills" id="pillsWrap">
+    <button class="pill on"  data-mode="2p">Two Players</button>
+    <button class="pill"     data-mode="easy">vs Bot · Easy</button>
+    <button class="pill"     data-mode="hard">vs Bot · Hard</button>
+  </div>
+
+  <button class="btn-new" id="btnNew">New Game</button>
+</header>
+
+<!-- ============================================================
+     MAIN
+     ============================================================ -->
+<main>
+  <!-- Sidebar -->
+  <aside>
+    <!-- Player X -->
+    <div class="pcard px act-x" id="cardX">
+      <div class="pcard-top">
+        <div class="pcard-icon">X</div>
+        <div class="pcard-name">Player X</div>
+      </div>
+      <div class="pcard-sub" id="subX">Your turn · 1 move</div>
+      <div class="dots" id="dotsX"><div class="dot x"></div></div>
+    </div>
+
+    <!-- Player O -->
+    <div class="pcard po" id="cardO">
+      <div class="pcard-top">
+        <div class="pcard-icon">O</div>
+        <div class="pcard-name" id="oName">Player O</div>
+      </div>
+      <div class="pcard-sub" id="subO">Waiting</div>
+      <div class="dots" id="dotsO">
+        <div class="dot"></div><div class="dot"></div>
+      </div>
+    </div>
+
+    <!-- Momentum -->
+    <div class="momentum-wrap">
+      <div class="momentum-label">
+        <span>Momentum</span>
+        <span id="momentumText" style="color:var(--text)">—</span>
+      </div>
+      <div class="momentum-bar-track">
+        <div class="momentum-bar-fill" id="momentumBar"></div>
+      </div>
+      <div class="momentum-names">
+        <span style="color:var(--xc)">X</span>
+        <span style="color:var(--oc)">O</span>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="ibox">
+      <strong>Moves Played</strong>
+      <span id="moveCount">0</span>
+    </div>
+    <div class="ibox">
+      <strong>Status</strong>
+      <span id="statusText">Awaiting first move</span>
+    </div>
+
+    <!-- Rules -->
+    <div class="rules">
+      <div class="rules-title">How to Play</div>
+      <ul>
+        <li>Get <b>6 in a row</b> on any axis to win</li>
+        <li>X plays <b>1 move</b> to start</li>
+        <li>Then players alternate <b>2 moves</b> each</li>
+        <li>4 in a row = <b>threat</b> (highlighted)</li>
+        <li>Control <b>momentum</b> with threats</li>
+        <li>Drag to <b>pan</b> · scroll to <b>zoom</b></li>
+      </ul>
+    </div>
+  </aside>
+
+  <!-- Canvas area -->
+  <div class="canvas-wrap" id="canvasWrap">
+    <canvas id="gc"></canvas>
+
+    <!-- Bot thinking badge -->
+    <div class="thinking-badge" id="thinkBadge">
+      <div class="thinking-dot"></div>
+      Bot is thinking…
+    </div>
+
+    <!-- Bottom HUDs -->
+    <div class="hud hud-br">Drag · Scroll to zoom</div>
+    <div class="hud hud-bl">
+      <span class="legend-dot" style="background:#7C4A2D"></span>X
+      <span class="legend-dot" style="background:#2D5A7C"></span>O
+      <span class="legend-dot" style="background:rgba(192,134,10,.55)"></span>Threat
+    </div>
+  </div>
+</main>
+
+<!-- ============================================================
+     WIN MODAL
+     ============================================================ -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-trophy" id="modalTrophy">🏆</div>
+    <div class="modal-title" id="modalTitle">X Wins!</div>
+    <div class="modal-sub"  id="modalSub">Six in a row achieved.</div>
+    <div class="modal-btns">
+      <button class="mbtn primary" id="modalPlay">Play Again</button>
+      <button class="mbtn sec"    id="modalClose">View Board</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     GAME SCRIPT
+     ============================================================ -->
+<script>
+'use strict';
+
+/* ----------------------------------------------------------
+   CONSTANTS
+---------------------------------------------------------- */
+const SQRT3   = Math.sqrt(3);
+const HEX_BASE = 36;           // base hex circumradius (CSS px)
+
+// 3 axes, each with 2 opposite directions (axial coordinates)
+const AXES = [
+  { d: [[1,0],  [-1,0]]  },   // flat  (E–W)
+  { d: [[0,1],  [0,-1]]  },   // SE–NW
+  { d: [[1,-1], [-1,1]]  },   // NE–SW
+];
+
+const NEIGHBORS = [[1,0],[-1,0],[0,1],[0,-1],[1,-1],[-1,1]];
+
+/* ----------------------------------------------------------
+   GAME STATE
+---------------------------------------------------------- */
+let G = freshGame();
+
+function freshGame(mode) {
+  return {
+    cells:     {},          // "q,r" → 'X' | 'O'
+    player:    'X',
+    movesLeft: 1,           // X opens with 1 move
+    firstDone: false,       // after X's opening move
+    over:      false,
+    winLine:   [],          // array of [q,r] pairs
+    threats:   new Set(),   // hex keys that are part of 4+ chain
+    xThreats:  0,
+    oThreats:  0,
+    mode:      mode || '2p',
+    totalMoves: 0,
+  };
+}
+
+/* ----------------------------------------------------------
+   VIEW / CAMERA STATE
+---------------------------------------------------------- */
+let V = {
+  panX: 0, panY: 0,
+  zoom: 1,
+  hovQ: null, hovR: null,
+  drag:      false,
+  isDrag:    false,
+  dsx: 0, dsy: 0,           // drag start screen
+  dpx: 0, dpy: 0,           // drag start pan
+  anims: {},                 // key → {t: 0..1}  (place animations)
+  botToken: 0,
+};
+
+/* ----------------------------------------------------------
+   CANVAS SETUP
+---------------------------------------------------------- */
+const canvas  = document.getElementById('gc');
+const ctx     = canvas.getContext('2d');
+const wrap    = document.getElementById('canvasWrap');
+let dpr       = window.devicePixelRatio || 1;
+
+function resize() {
+  const r  = wrap.getBoundingClientRect();
+  dpr      = window.devicePixelRatio || 1;
+  canvas.width  = r.width  * dpr;
+  canvas.height = r.height * dpr;
+  canvas.style.width  = r.width  + 'px';
+  canvas.style.height = r.height + 'px';
+  scheduleRender();
+}
+window.addEventListener('resize', resize);
+
+/* ----------------------------------------------------------
+   HEX MATH
+---------------------------------------------------------- */
+function hexSize() { return HEX_BASE * V.zoom * dpr; }
+
+// Axial hex → canvas pixel
+function h2p(q, r) {
+  const s = hexSize();
+  return {
+    x: s * (SQRT3 * q + SQRT3 * 0.5 * r) + canvas.width  * 0.5 + V.panX * dpr,
+    y: s * (1.5 * r)                      + canvas.height * 0.5 + V.panY * dpr,
+  };
+}
+
+// Canvas pixel → axial hex
+function p2h(cx, cy) {
+  const s  = hexSize();
+  const wx = (cx - canvas.width  * 0.5 - V.panX * dpr) / s;
+  const wy = (cy - canvas.height * 0.5 - V.panY * dpr) / s;
+  return hexRound(SQRT3/3 * wx - 1/3 * wy,  2/3 * wy);
+}
+
+function hexRound(fq, fr) {
+  const fs = -fq - fr;
+  let q = Math.round(fq), r = Math.round(fr), s = Math.round(fs);
+  const dq = Math.abs(q-fq), dr = Math.abs(r-fr), ds = Math.abs(s-fs);
+  if      (dq > dr && dq > ds) q = -r - s;
+  else if (dr > ds)            r = -q - s;
+  return { q, r };
+}
+
+function k(q, r) { return `${q},${r}`; }
+
+// Draw a pointy-top hexagon path
+function hexPath(cx, cy, size) {
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const a = Math.PI / 3 * i + Math.PI / 6;
+    const x = cx + size * Math.cos(a);
+    const y = cy + size * Math.sin(a);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+}
+
+/* ----------------------------------------------------------
+   GAME LOGIC
+---------------------------------------------------------- */
+function countDir(q, r, dq, dr, player) {
+  let n = 0, nq = q+dq, nr = r+dr;
+  while (G.cells[k(nq,nr)] === player) { n++; nq += dq; nr += dr; }
+  return n;
+}
+
+function chainThrough(q, r, axis, player) {
+  const [[d1q,d1r],[d2q,d2r]] = axis.d;
+  const cells = [[q,r]];
+  let nq=q+d1q, nr=r+d1r;
+  while (G.cells[k(nq,nr)] === player) { cells.push([nq,nr]); nq+=d1q; nr+=d1r; }
+  nq=q+d2q; nr=r+d2r;
+  while (G.cells[k(nq,nr)] === player) { cells.unshift([nq,nr]); nq+=d2q; nr+=d2r; }
+  return cells;
+}
+
+function checkWin(q, r, player) {
+  for (const axis of AXES) {
+    const chain = chainThrough(q, r, axis, player);
+    if (chain.length >= 6) return chain;
+  }
+  return null;
+}
+
+function updateThreats() {
+  const threats = new Set();
+  let xt = 0, ot = 0;
+  const seen = new Set();
+
+  for (const key of Object.keys(G.cells)) {
+    const [q, r] = key.split(',').map(Number);
+    const player  = G.cells[key];
+
+    for (const axis of AXES) {
+      const chain = chainThrough(q, r, axis, player);
+      if (chain.length < 4 || chain.length >= 6) continue;
+
+      // canonical key for this chain so we don't double-count
+      const chainKey = chain.map(([a,b])=>k(a,b)).sort().join('|');
+      if (seen.has(chainKey)) continue;
+      seen.add(chainKey);
+
+      chain.forEach(([cq,cr]) => threats.add(k(cq,cr)));
+      if (player === 'X') xt++; else ot++;
+    }
+  }
+
+  G.threats  = threats;
+  G.xThreats = xt;
+  G.oThreats = ot;
+}
+
+function placeMove(q, r) {
+  if (G.over || G.cells[k(q,r)]) return false;
+
+  G.cells[k(q,r)] = G.player;
+  G.totalMoves++;
+  V.anims[k(q,r)] = { t: 0 };
+
+  // Win check
+  const win = checkWin(q, r, G.player);
+  if (win) {
+    G.winLine = win;
+    G.over    = true;
+    updateThreats();
+    updateUI();
+    scheduleRender();
+    setTimeout(showWinModal, 700);
+    return true;
+  }
+
+  // Update threats / momentum
+  updateThreats();
+
+  // Advance turn
+  G.movesLeft--;
+  if (G.movesLeft <= 0) {
+    G.player    = G.player === 'X' ? 'O' : 'X';
+    G.movesLeft = 2;
+    G.firstDone = true;
+  }
+
+  updateUI();
+  scheduleRender();
+  return true;
+}
+
+function startNewGame() {
+  V.botToken++;          // cancels any pending bot turn
+  G = freshGame(G.mode);
+  V.anims  = {};
+  V.hovQ   = null;
+  V.hovR   = null;
+  hideModal();
+  updateUI();
+  scheduleRender();
+}
+
+/* ----------------------------------------------------------
+   BOT AI
+---------------------------------------------------------- */
+function getCandidates() {
+  const placed = Object.keys(G.cells);
+  if (placed.length === 0) return [[0, 0]];
+
+  const cands = new Set();
+  for (const key of placed) {
+    const [q, r] = key.split(',').map(Number);
+    for (const [dq, dr] of NEIGHBORS) {
+      const nk = k(q+dq, r+dr);
+      if (!G.cells[nk]) cands.add(nk);
+      // distance-2 candidates for more variety
+      for (const [dq2, dr2] of NEIGHBORS) {
+        const nk2 = k(q+dq+dq2, r+dr+dr2);
+        if (!G.cells[nk2]) cands.add(nk2);
+      }
+    }
+  }
+  return [...cands].map(s => s.split(',').map(Number));
+}
+
+function axisLen(q, r, axis, player) {
+  const [[d1q,d1r],[d2q,d2r]] = axis.d;
+  return 1 + countDir(q,r,d1q,d1r,player) + countDir(q,r,d2q,d2r,player);
+}
+
+function openEnds(q, r, axis, player) {
+  const [[d1q,d1r],[d2q,d2r]] = axis.d;
+  let open = 0;
+  let nq = q+d1q, nr = r+d1r;
+  while (G.cells[k(nq,nr)] === player) { nq+=d1q; nr+=d1r; }
+  if (!G.cells[k(nq,nr)]) open++;
+  nq = q+d2q; nr = r+d2r;
+  while (G.cells[k(nq,nr)] === player) { nq+=d2q; nr+=d2r; }
+  if (!G.cells[k(nq,nr)]) open++;
+  return open;
+}
+
+function scoreMove(q, r, player) {
+  const opp = player === 'X' ? 'O' : 'X';
+  let score  = 0;
+
+  // --- Own piece score ---
+  G.cells[k(q,r)] = player;
+  for (const axis of AXES) {
+    const n    = axisLen(q, r, axis, player);
+    const ends = openEnds(q, r, axis, player);
+    const mul  = ends === 2 ? 2.5 : ends === 1 ? 1.2 : 0.3;
+    if      (n >= 6) score += 2000000;
+    else if (n === 5) score += 100000 * mul;
+    else if (n === 4) score += 8000   * mul;
+    else if (n === 3) score += 600    * mul;
+    else if (n === 2) score += 50     * mul;
+    else              score += 4;
+  }
+  delete G.cells[k(q,r)];
+
+  // --- Block opponent ---
+  G.cells[k(q,r)] = opp;
+  for (const axis of AXES) {
+    const n    = axisLen(q, r, axis, opp);
+    const ends = openEnds(q, r, axis, opp);
+    const mul  = ends === 2 ? 2.2 : ends === 1 ? 1 : 0.3;
+    if      (n >= 6) score += 1900000;
+    else if (n === 5) score += 90000  * mul;
+    else if (n === 4) score += 7000   * mul;
+    else if (n === 3) score += 500    * mul;
+    else if (n === 2) score += 40     * mul;
+  }
+  delete G.cells[k(q,r)];
+
+  // Slight centre bias
+  score -= (Math.abs(q) + Math.abs(r)) * 1.5;
+  return score;
+}
+
+function getBotMove() {
+  const cands = getCandidates();
+  if (!cands.length) return null;
+
+  if (G.mode === 'easy') {
+    // Random-ish: pick from candidates with a very weak bias
+    return cands[Math.floor(Math.random() * cands.length)];
+  }
+
+  // Hard: greedy with a tiny jitter
+  let best = null, bestScore = -Infinity;
+  for (const [q, r] of cands) {
+    const s = scoreMove(q, r, G.player) + Math.random() * 20;
+    if (s > bestScore) { bestScore = s; best = [q, r]; }
+  }
+  return best;
+}
+
+async function runBotTurn() {
+  const token    = V.botToken;
+  const movesToDo = G.movesLeft;
+
+  setBotBadge(true);
+  for (let i = 0; i < movesToDo; i++) {
+    if (token !== V.botToken || G.over || G.player !== 'O') break;
+
+    const delay = G.mode === 'easy'
+      ? 300 + Math.random() * 200
+      : 450 + Math.random() * 350;
+    await sleep(delay);
+
+    if (token !== V.botToken || G.over || G.player !== 'O') break;
+    const mv = getBotMove();
+    if (mv) placeMove(mv[0], mv[1]);
+  }
+  if (token === V.botToken) setBotBadge(false);
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function setBotBadge(v) {
+  document.getElementById('thinkBadge').classList.toggle('show', v);
+}
+
+/* ----------------------------------------------------------
+   RENDERING
+---------------------------------------------------------- */
+let rafPending = false;
+
+function scheduleRender() {
+  if (!rafPending) {
+    rafPending = true;
+    requestAnimationFrame(drawFrame);
+  }
+}
+
+function drawFrame(now) {
+  rafPending = false;
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const s = hexSize();
+
+  // Visible hex range (generous buffer)
+  const cH   = p2h(W * 0.5, H * 0.5);
+  const cols  = Math.ceil(W / (s * SQRT3)) + 5;
+  const rows  = Math.ceil(H / (s * 1.5))  + 5;
+
+  const minQ = cH.q - cols, maxQ = cH.q + cols;
+  const minR = cH.r - rows, maxR = cH.r + rows;
+
+  let needsNextFrame = false;
+
+  // Draw all visible hexes
+  for (let r = minR; r <= maxR; r++) {
+    for (let q = minQ; q <= maxQ; q++) {
+      if (drawHex(q, r, s, now)) needsNextFrame = true;
+    }
+  }
+
+  // Draw placed hexes that might be just outside range
+  for (const key of Object.keys(G.cells)) {
+    const [q, r] = key.split(',').map(Number);
+    if (q < minQ || q > maxQ || r < minR || r > maxR) {
+      if (drawHex(q, r, s, now)) needsNextFrame = true;
+    }
+  }
+
+  // Advance animations
+  let anyAnim = false;
+  for (const key of Object.keys(V.anims)) {
+    V.anims[key].t = Math.min(1, V.anims[key].t + 0.07);
+    if (V.anims[key].t < 1) anyAnim = true;
+    else delete V.anims[key];
+  }
+
+  if (anyAnim || needsNextFrame) scheduleRender();
+}
+
+// Returns true if continuous redraw needed (e.g. win pulse)
+function drawHex(q, r, s, now) {
+  const { x, y } = h2p(q, r);
+
+  // Early cull
+  const pad = s * 2;
+  if (x < -pad || x > canvas.width + pad || y < -pad || y > canvas.height + pad) return false;
+
+  const key    = k(q, r);
+  const piece  = G.cells[key];
+  const isHov  = !G.over && V.hovQ === q && V.hovR === r && !piece;
+  const isWin  = G.over && G.winLine.some(([wq,wr]) => wq === q && wr === r);
+  const isThr  = G.threats.has(key);
+  const anim   = V.anims[key];
+
+  const inner  = s * 0.93;
+
+  // ----- Hex fill -----
+  hexPath(x, y, inner);
+
+  if (isWin) {
+    const pulse = 0.5 + 0.5 * Math.sin(now * 0.004);
+    ctx.fillStyle = `rgba(74,138,46,${0.12 + pulse * 0.22})`;
+  } else if (isThr && !piece) {
+    ctx.fillStyle = 'rgba(192,134,10,0.06)';
+  } else if (isHov) {
+    ctx.fillStyle = G.player === 'X'
+      ? 'rgba(124,74,45,0.09)'
+      : 'rgba(45,90,124,0.09)';
+  } else {
+    ctx.fillStyle = 'rgba(255,252,248,0.82)';
+  }
+  ctx.fill();
+
+  // ----- Hex stroke -----
+  ctx.strokeStyle = isWin
+    ? 'rgba(74,138,46,0.55)'
+    : isThr
+      ? 'rgba(192,134,10,0.32)'
+      : 'rgba(175,150,120,0.3)';
+  ctx.lineWidth = isWin || isThr ? 1.5 * dpr : 0.75 * dpr;
+  ctx.stroke();
+
+  // ----- Piece -----
+  if (piece) {
+    let scale = 1;
+    if (anim) scale = easeOutBounce(anim.t);
+    drawPiece(x, y, s, piece, scale, isWin);
+  }
+
+  // ----- Hover ghost -----
+  if (isHov) {
+    const humanTurn = G.mode === '2p' || G.player === 'X';
+    if (humanTurn) drawPiece(x, y, s, G.player, 1, false, true);
+  }
+
+  return isWin; // win hexes need constant redraw for pulse
+}
+
+function easeOutBounce(t) {
+  const n1 = 7.5625, d1 = 2.75;
+  if (t < 1 / d1)       return n1 * t * t;
+  if (t < 2 / d1)       return n1 * (t -= 1.5  / d1) * t + 0.75;
+  if (t < 2.5 / d1)     return n1 * (t -= 2.25 / d1) * t + 0.9375;
+  return                        n1 * (t -= 2.625/ d1) * t + 0.984375;
+}
+
+function drawPiece(x, y, s, player, scale = 1, isWin = false, ghost = false) {
+  const r   = s * 0.43 * scale;
+  const isX = player === 'X';
+  const col = isX ? '#7C4A2D' : '#2D5A7C';
+  const hi  = isX ? '#C0825A' : '#5A98C8';
+
+  ctx.save();
+  ctx.translate(x, y);
+
+  if (ghost) ctx.globalAlpha = 0.3;
+
+  // Shadow
+  if (!ghost && scale > 0.5) {
+    ctx.shadowColor   = isX ? 'rgba(124,74,45,0.28)' : 'rgba(45,90,124,0.28)';
+    ctx.shadowBlur    = s * 0.28;
+    ctx.shadowOffsetY = s * 0.07;
+  }
+
+  // Circle body
+  ctx.beginPath();
+  ctx.arc(0, 0, r, 0, Math.PI * 2);
+
+  const grd = ctx.createRadialGradient(-r * 0.28, -r * 0.3, 0, 0, 0, r);
+  grd.addColorStop(0, hi);
+  grd.addColorStop(1, col);
+  ctx.fillStyle = grd;
+  ctx.fill();
+
+  ctx.shadowColor = 'transparent';
+
+  // Specular highlight
+  ctx.beginPath();
+  ctx.arc(-r * 0.22, -r * 0.26, r * 0.32, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.18)';
+  ctx.fill();
+
+  // Rim
+  ctx.beginPath();
+  ctx.arc(0, 0, r, 0, Math.PI * 2);
+  ctx.strokeStyle = isX ? 'rgba(80,36,16,0.35)' : 'rgba(20,55,90,0.35)';
+  ctx.lineWidth   = dpr * 0.8;
+  ctx.stroke();
+
+  // Letter
+  if (scale > 0.55 && !ghost) {
+    ctx.fillStyle    = 'rgba(255,255,255,0.92)';
+    ctx.font         = `600 ${r * 0.95}px 'Cormorant Garamond', serif`;
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(player, 0, r * 0.07);
+  }
+
+  ctx.restore();
+}
+
+/* ----------------------------------------------------------
+   INPUT: MOUSE
+---------------------------------------------------------- */
+function cpx(e) {
+  const b = canvas.getBoundingClientRect();
+  return {
+    x: (e.clientX - b.left) * (canvas.width  / b.width),
+    y: (e.clientY - b.top)  * (canvas.height / b.height),
+  };
+}
+
+canvas.addEventListener('mousedown', e => {
+  const p  = cpx(e);
+  V.drag   = true;
+  V.isDrag = false;
+  V.dsx    = p.x; V.dsy = p.y;
+  V.dpx    = V.panX; V.dpy = V.panY;
+});
+
+canvas.addEventListener('mousemove', e => {
+  const p = cpx(e);
+
+  if (V.drag) {
+    const dx = p.x - V.dsx, dy = p.y - V.dsy;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) V.isDrag = true;
+    if (V.isDrag) {
+      V.panX = V.dpx + dx / dpr;
+      V.panY = V.dpy + dy / dpr;
+      wrap.style.cursor = 'grabbing';
+      scheduleRender();
+      return;
+    }
+  }
+
+  const h = p2h(p.x, p.y);
+  if (h.q !== V.hovQ || h.r !== V.hovR) {
+    V.hovQ = h.q; V.hovR = h.r;
+    scheduleRender();
+  }
+});
+
+canvas.addEventListener('mouseup', e => {
+  const wasDrag = V.isDrag;
+  V.drag   = false;
+  V.isDrag = false;
+  wrap.style.cursor = 'crosshair';
+
+  if (!wasDrag && !G.over) {
+    const p   = cpx(e);
+    const hex = p2h(p.x, p.y);
+    handleClick(hex.q, hex.r);
+  }
+});
+
+canvas.addEventListener('mouseleave', () => {
+  V.drag   = false;
+  V.hovQ   = null;
+  V.hovR   = null;
+  scheduleRender();
+});
+
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const factor   = e.deltaY < 0 ? 1.1 : 0.909;
+  const newZoom  = Math.max(0.35, Math.min(3.5, V.zoom * factor));
+  const p        = cpx(e);
+  const wx       = (p.x - canvas.width  * 0.5) / dpr;
+  const wy       = (p.y - canvas.height * 0.5) / dpr;
+  const sc       = newZoom / V.zoom;
+  V.panX = wx + (V.panX - wx) * sc;
+  V.panY = wy + (V.panY - wy) * sc;
+  V.zoom = newZoom;
+  scheduleRender();
+}, { passive: false });
+
+/* ----------------------------------------------------------
+   INPUT: TOUCH
+---------------------------------------------------------- */
+let lastPinchDist = 0;
+
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  if (e.touches.length === 1) {
+    const t = e.touches[0];
+    const b = canvas.getBoundingClientRect();
+    V.drag   = true;
+    V.isDrag = false;
+    V.dsx    = (t.clientX - b.left) * (canvas.width  / b.width);
+    V.dsy    = (t.clientY - b.top)  * (canvas.height / b.height);
+    V.dpx    = V.panX; V.dpy = V.panY;
+  } else if (e.touches.length === 2) {
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    lastPinchDist = Math.hypot(dx, dy);
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if (e.touches.length === 1 && V.drag) {
+    const t = e.touches[0];
+    const b = canvas.getBoundingClientRect();
+    const px = (t.clientX - b.left) * (canvas.width  / b.width);
+    const py = (t.clientY - b.top)  * (canvas.height / b.height);
+    const dx = px - V.dsx, dy = py - V.dsy;
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) V.isDrag = true;
+    if (V.isDrag) {
+      V.panX = V.dpx + dx / dpr;
+      V.panY = V.dpy + dy / dpr;
+      scheduleRender();
+    }
+  } else if (e.touches.length === 2 && lastPinchDist) {
+    const dx   = e.touches[0].clientX - e.touches[1].clientX;
+    const dy   = e.touches[0].clientY - e.touches[1].clientY;
+    const dist = Math.hypot(dx, dy);
+    V.zoom = Math.max(0.35, Math.min(3.5, V.zoom * dist / lastPinchDist));
+    lastPinchDist = dist;
+    scheduleRender();
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchend', e => {
+  if (!V.isDrag && e.changedTouches.length === 1 && !G.over) {
+    const t = e.changedTouches[0];
+    const b = canvas.getBoundingClientRect();
+    const cx = (t.clientX - b.left) * (canvas.width  / b.width);
+    const cy = (t.clientY - b.top)  * (canvas.height / b.height);
+    const hex = p2h(cx, cy);
+    handleClick(hex.q, hex.r);
+  }
+  V.drag   = false;
+  V.isDrag = false;
+  lastPinchDist = 0;
+}, { passive: false });
+
+/* ----------------------------------------------------------
+   CLICK HANDLER
+---------------------------------------------------------- */
+async function handleClick(q, r) {
+  if (G.over) return;
+  if (G.cells[k(q,r)]) return;
+  if (G.mode !== '2p' && G.player === 'O') return; // bot's turn
+
+  placeMove(q, r);
+
+  if (!G.over && G.mode !== '2p' && G.player === 'O') {
+    await runBotTurn();
+  }
+}
+
+/* Keyboard shortcuts */
+window.addEventListener('keydown', e => {
+  if (e.key === 'n' || e.key === 'N') startNewGame();
+  if (e.key === 'r' || e.key === 'R') { V.panX = 0; V.panY = 0; V.zoom = 1; scheduleRender(); }
+});
+
+/* ----------------------------------------------------------
+   UI UPDATES
+---------------------------------------------------------- */
+function updateUI() {
+  const cX  = document.getElementById('cardX');
+  const cO  = document.getElementById('cardO');
+  const subX= document.getElementById('subX');
+  const subO= document.getElementById('subO');
+  const dX  = document.getElementById('dotsX');
+  const dO  = document.getElementById('dotsO');
+  const stEl= document.getElementById('statusText');
+  const mcEl= document.getElementById('moveCount');
+
+  // Mode-based O name
+  document.getElementById('oName').textContent =
+    G.mode === '2p' ? 'Player O' : 'Bot (O)';
+
+  // Cards active state
+  const xAct = G.player === 'X' && !G.over;
+  const oAct = G.player === 'O' && !G.over;
+  cX.className = 'pcard px' + (xAct ? ' act-x' : '');
+  cO.className = 'pcard po' + (oAct ? ' act-o' : '');
+
+  // Subs
+  if (G.over) {
+    const winner = G.winLine.length ? G.cells[k(G.winLine[0][0], G.winLine[0][1])] : null;
+    subX.textContent = winner === 'X' ? '🏆 Winner!' : 'Game over';
+    subO.textContent = winner === 'O' ? '🏆 Winner!' : 'Game over';
+    cX.className += winner === 'X' ? ' act-x' : '';
+    cO.className += winner === 'O' ? ' act-o' : '';
+    stEl.textContent = winner ? `${winner} wins!` : 'Game over';
+  } else if (xAct) {
+    subX.textContent = `Your turn · ${G.movesLeft} move${G.movesLeft > 1 ? 's' : ''}`;
+    subO.textContent = G.mode === '2p' ? 'Waiting…' : '';
+    stEl.textContent = 'X is playing';
+  } else {
+    subX.textContent = 'Waiting…';
+    subO.textContent = G.mode === '2p'
+      ? `Your turn · ${G.movesLeft} moves`
+      : 'Bot thinking…';
+    stEl.textContent = G.mode === '2p' ? 'O is playing' : 'Bot is thinking';
+  }
+
+  // Dots
+  const xTotal = !G.firstDone ? 1 : 2;
+  const oTotal = 2;
+  const xFill  = xAct ? G.movesLeft : 0;
+  const oFill  = oAct ? G.movesLeft : 0;
+
+  dX.innerHTML = Array.from({length: xTotal}, (_, i) =>
+    `<div class="dot${i < xFill ? ' x' : ''}"></div>`).join('');
+  dO.innerHTML = Array.from({length: oTotal}, (_, i) =>
+    `<div class="dot${i < oFill ? ' o' : ''}"></div>`).join('');
+
+  // Move count
+  mcEl.textContent = G.totalMoves;
+
+  // Momentum bar
+  updateMomentum();
+}
+
+function updateMomentum() {
+  const total = G.xThreats + G.oThreats;
+  const bar   = document.getElementById('momentumBar');
+  const label = document.getElementById('momentumText');
+
+  if (total === 0) {
+    bar.style.width = '50%';
+    label.textContent = '—';
+    label.style.color = 'var(--muted)';
+    return;
+  }
+
+  const xPct = G.xThreats / total;
+  bar.style.width   = (xPct * 100).toFixed(1) + '%';
+
+  if (xPct > 0.6) {
+    label.textContent = 'X leads';
+    label.style.color = 'var(--xc)';
+  } else if (xPct < 0.4) {
+    label.textContent = 'O leads';
+    label.style.color = 'var(--oc)';
+  } else {
+    label.textContent = 'Even';
+    label.style.color = 'var(--muted)';
+  }
+}
+
+/* ----------------------------------------------------------
+   MODAL
+---------------------------------------------------------- */
+function showWinModal() {
+  if (!G.winLine.length) return;
+  const winKey  = k(G.winLine[0][0], G.winLine[0][1]);
+  const winner  = G.cells[winKey];
+  const isBot   = G.mode !== '2p' && winner === 'O';
+
+  document.getElementById('modalTrophy').textContent = winner === 'X' ? '🏆' : (isBot ? '🤖' : '🏆');
+  document.getElementById('modalTitle').textContent  = isBot ? 'Bot Wins!' : `${winner} Wins!`;
+  document.getElementById('modalSub').textContent    =
+    `Six in a row — game lasted ${G.totalMoves} move${G.totalMoves !== 1 ? 's' : ''}`;
+
+  document.getElementById('overlay').classList.add('show');
+}
+
+function hideModal() {
+  document.getElementById('overlay').classList.remove('show');
+}
+
+/* ----------------------------------------------------------
+   WIRE UP BUTTONS
+---------------------------------------------------------- */
+document.querySelectorAll('.pill').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.pill').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    G.mode = btn.dataset.mode;
+    startNewGame();
+  });
+});
+
+document.getElementById('btnNew').addEventListener('click', startNewGame);
+document.getElementById('modalPlay').addEventListener('click', startNewGame);
+document.getElementById('modalClose').addEventListener('click', hideModal);
+
+/* ----------------------------------------------------------
+   BOOT
+---------------------------------------------------------- */
+resize();
+updateUI();
+scheduleRender();
+
+</script>
+</body>
+</html>
