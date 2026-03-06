@@ -5,7 +5,7 @@ A browser-based implementation of the hexagonal "Six in a Row" game, as describe
 
 ---
 
-## 🎮 How to Play
+## How to Play
 
 ### Objective
 Get **6 of your pieces in a row** along any of the three hexagonal axes.
@@ -28,7 +28,7 @@ The sidebar tracks **momentum** — who controls more active threats. Consistent
 
 ---
 
-## 🕹️ Modes
+## Modes
 
 | Mode | Description |
 |------|-------------|
@@ -38,7 +38,7 @@ The sidebar tracks **momentum** — who controls more active threats. Consistent
 
 ---
 
-## 🚀 Running the Game
+## Running the Game
 
 ```bash
 # Option 1: Just open the file
@@ -53,7 +53,7 @@ No npm, no bundler, no framework — pure HTML/CSS/JS.
 
 ---
 
-## 🤖 Bot Feasibility
+## Bot Feasibility
 
 ### What's implemented
 The **Hard bot** uses a greedy one-ply evaluation:
