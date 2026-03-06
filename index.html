@@ -25,7 +25,7 @@
 
   <!-- Hero -->
   <div class="home-hero">
-    <p class="home-eyebrow">Hexagonal Strategy</p>
+    <p class="home-eyebrow">Hexagons are the Bestagons</p>
     <h1 class="home-title">Six in a <em>Row</em></h1>
     <p class="home-desc">Get six pieces in a line across an infinite hex board.<br>Two moves per turn. Every threat counts.</p>
   </div>
@@ -43,7 +43,7 @@
       </div>
       <div class="mcard-body">
         <h3>Local Play</h3>
-        <p>Two players, one screen. Pass and play with a friend.</p>
+        <p>Play with a friend on the same screen.</p>
       </div>
       <div class="mcard-foot">
         <button class="mbtn primary" data-action="start2p">Play →</button>
@@ -63,7 +63,7 @@
       </div>
       <div class="mcard-body">
         <h3>vs Bot</h3>
-        <p>Challenge the AI. Medium uses greedy tactics. Hard plans two moves ahead.</p>
+        <p>Challenge a bot. The medium bot uses greedy tactics. The hard bot plans two moves ahead.</p>
       </div>
       <div class="mcard-foot mcard-foot-row">
         <button class="mbtn secondary" data-action="startMedium">Medium</button>
@@ -97,8 +97,6 @@
     <div class="rule-chip"><span class="chip-num">6</span>in a row wins</div>
     <div class="rule-sep">·</div>
     <div class="rule-chip"><span class="chip-num">2</span>moves per turn</div>
-    <div class="rule-sep">·</div>
-    <div class="rule-chip"><span class="chip-num">4</span>in a row = threat</div>
     <div class="rule-sep">·</div>
     <div class="rule-chip">infinite board</div>
   </div>
@@ -252,9 +250,8 @@
         <ul>
           <li>Get <b>6 in a row</b> on any axis to win</li>
           <li>X plays <b>1 move</b> to open</li>
-          <li>Then players alternate <b>2 moves</b> each</li>
+          <li>Then X and O alternate <b>2 moves</b> each</li>
           <li>4 in a row = <b>threat</b> (amber highlight)</li>
-          <li>Threats need <b>2 blocks</b> to neutralise</li>
           <li>Drag to <b>pan</b> · scroll to <b>zoom</b></li>
           <li>Press <b>U</b> to undo · <b>R</b> to re-centre</li>
         </ul>
@@ -296,7 +293,6 @@
   <!-- Win modal -->
   <div class="overlay" id="overlay">
     <div class="modal">
-      <div class="modal-trophy" id="modalTrophy">🏆</div>
       <div class="modal-title"  id="modalTitle">X Wins!</div>
       <div class="modal-sub"    id="modalSub">Six in a row achieved.</div>
       <div class="modal-btns">
