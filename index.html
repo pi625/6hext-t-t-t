@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Six in a Row</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400;1,600&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ================================================================
+     HOME VIEW
+     ================================================================ -->
+<div id="viewHome" class="view active">
+
+  <!-- Nav -->
+  <nav class="home-nav">
+    <div class="home-logo">Six in a <em>Row</em></div>
+    <a class="home-nav-link" href="https://github.com" target="_blank" rel="noopener" title="GitHub">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.604-3.369-1.342-3.369-1.342-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.579.688.481C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+    </a>
+  </nav>
+
+  <!-- Hero -->
+  <div class="home-hero">
+    <p class="home-eyebrow">Hexagonal Strategy</p>
+    <h1 class="home-title">Six in a <em>Row</em></h1>
+    <p class="home-desc">Get six pieces in a line across an infinite hex board.<br>Two moves per turn. Every threat counts.</p>
+  </div>
+
+  <!-- Mode cards -->
+  <div class="mode-cards" id="modeCards">
+
+    <!-- Local -->
+    <div class="mcard" id="mcardLocal">
+      <div class="mcard-icon">
+        <svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <circle cx="9" cy="10" r="4"/><circle cx="19" cy="10" r="4"/>
+          <path d="M2 24c0-3.866 3.134-7 7-7h10c3.866 0 7 3.134 7 7"/>
+        </svg>
+      </div>
+      <div class="mcard-body">
+        <h3>Local Play</h3>
+        <p>Two players, one screen. Pass and play with a friend.</p>
+      </div>
+      <div class="mcard-foot">
+        <button class="mbtn primary" data-action="start2p">Play →</button>
+      </div>
+    </div>
+
+    <!-- Bot -->
+    <div class="mcard" id="mcardBot">
+      <div class="mcard-icon">
+        <svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="6" y="10" width="16" height="12" rx="3"/>
+          <path d="M10 10V8a4 4 0 0 1 8 0v2"/>
+          <circle cx="10.5" cy="16" r="1.5" fill="currentColor" stroke="none"/>
+          <circle cx="17.5" cy="16" r="1.5" fill="currentColor" stroke="none"/>
+          <path d="M11 20h6"/>
+        </svg>
+      </div>
+      <div class="mcard-body">
+        <h3>vs Bot</h3>
+        <p>Challenge the AI. Medium uses greedy tactics. Hard plans two moves ahead.</p>
+      </div>
+      <div class="mcard-foot mcard-foot-row">
+        <button class="mbtn secondary" data-action="startMedium">Medium</button>
+        <button class="mbtn primary"   data-action="startHard">Hard</button>
+      </div>
+    </div>
+
+    <!-- Online -->
+    <div class="mcard" id="mcardOnline">
+      <div class="mcard-icon">
+        <svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <circle cx="14" cy="14" r="11"/>
+          <ellipse cx="14" cy="14" rx="5" ry="11"/>
+          <path d="M3 14h22M3.5 9h21M3.5 19h21"/>
+        </svg>
+      </div>
+      <div class="mcard-body">
+        <h3>Play Online</h3>
+        <p>Generate a 6-letter code, share it with a friend, play from anywhere.</p>
+      </div>
+      <div class="mcard-foot mcard-foot-row">
+        <button class="mbtn secondary" data-action="openCreate">Create</button>
+        <button class="mbtn primary"   data-action="openJoin">Join</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- How it works strip -->
+  <div class="home-rules">
+    <div class="rule-chip"><span class="chip-num">6</span>in a row wins</div>
+    <div class="rule-sep">·</div>
+    <div class="rule-chip"><span class="chip-num">2</span>moves per turn</div>
+    <div class="rule-sep">·</div>
+    <div class="rule-chip"><span class="chip-num">4</span>in a row = threat</div>
+    <div class="rule-sep">·</div>
+    <div class="rule-chip">infinite board</div>
+  </div>
+
+  <!-- Online modal -->
+  <div id="onlineModal" class="online-modal">
+    <div class="online-box">
+
+      <!-- Tab switcher -->
+      <div class="online-tabs">
+        <button class="otab active" id="otabCreate">Create Room</button>
+        <button class="otab"        id="otabJoin">Join Room</button>
+        <button class="online-close" id="onlineClose" title="Close">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4l12 12M16 4L4 16"/></svg>
+        </button>
+      </div>
+
+      <!-- Create pane -->
+      <div id="paneCreate" class="online-pane">
+        <p class="online-pane-label">Share this code with your friend</p>
+        <div class="code-display" id="codeDisplay">
+          <span id="codeValue">——————</span>
+          <button class="code-copy" id="copyBtn" title="Copy to clipboard">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="7" width="10" height="11" rx="2"/><path d="M4 13V4a2 2 0 0 1 2-2h8"/></svg>
+          </button>
+        </div>
+        <div class="online-status-row" id="createStatus">
+          <span class="status-dot spinning"></span>
+          <span id="createStatusText">Connecting to server…</span>
+        </div>
+        <button class="mbtn secondary full" id="cancelCreate">Cancel</button>
+      </div>
+
+      <!-- Join pane -->
+      <div id="paneJoin" class="online-pane hidden">
+        <p class="online-pane-label">Enter your friend's room code</p>
+        <input type="text" id="joinInput" class="code-input" placeholder="ABCDEF" maxlength="6" autocomplete="off" autocorrect="off" spellcheck="false">
+        <button class="mbtn primary full" id="joinBtn">Join Game</button>
+        <div class="online-status-row hidden" id="joinStatus">
+          <span class="status-dot" id="joinDot"></span>
+          <span id="joinStatusText"></span>
+        </div>
+        <button class="mbtn secondary full" id="cancelJoin">Cancel</button>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /viewHome -->
+
+
+<!-- ================================================================
+     GAME VIEW
+     ================================================================ -->
+<div id="viewGame" class="view">
+
+  <header class="game-header">
+    <button class="btn-back" id="btnBack" title="Back to home">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4L6 10l6 6"/></svg>
+    </button>
+
+    <div class="game-logo">Six in a <em>Row</em></div>
+
+    <div class="mode-badge" id="modeBadge">Local</div>
+
+    <div class="hdr-btns">
+      <button class="btn-icon disabled" id="btnUndo" title="Undo (U)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 7h10a6 6 0 0 1 0 12H7"/>
+          <polyline points="7 3 3 7 7 11"/>
+        </svg>
+      </button>
+      <button class="btn-new" id="btnNew">New Game</button>
+    </div>
+  </header>
+
+  <main class="game-main">
+
+    <!-- Sidebar -->
+    <aside class="game-aside">
+
+      <!-- Player X -->
+      <div class="pcard px act-x" id="cardX">
+        <div class="pcard-top">
+          <div class="pcard-icon">X</div>
+          <div class="pcard-name">Player X</div>
+          <div class="score-badge" id="scoreX">0</div>
+        </div>
+        <div class="pcard-sub" id="subX">Your turn · 1 move</div>
+        <div class="dots" id="dotsX"><div class="dot x"></div></div>
+      </div>
+
+      <!-- Player O -->
+      <div class="pcard po" id="cardO">
+        <div class="pcard-top">
+          <div class="pcard-icon">O</div>
+          <div class="pcard-name" id="oName">Player O</div>
+          <div class="score-badge" id="scoreO">0</div>
+        </div>
+        <div class="pcard-sub" id="subO">Waiting</div>
+        <div class="dots" id="dotsO">
+          <div class="dot"></div><div class="dot"></div>
+        </div>
+      </div>
+
+      <!-- Momentum -->
+      <div class="momentum-wrap" id="momentumWrap">
+        <div class="momentum-label">
+          <span>Momentum</span>
+          <span id="momentumText" style="color:var(--text)">—</span>
+        </div>
+        <div class="momentum-bar-track">
+          <div class="momentum-bar-fill" id="momentumBar"></div>
+        </div>
+        <div class="momentum-names">
+          <span style="color:var(--xc)">X</span>
+          <span style="color:var(--oc)">O</span>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="ibox">
+        <strong>Moves Played</strong>
+        <span id="moveCount">0</span>
+      </div>
+      <div class="ibox">
+        <strong>Status</strong>
+        <span id="statusText">Awaiting first move</span>
+      </div>
+
+      <!-- Display toggles -->
+      <div class="settings-box">
+        <strong>Display</strong>
+        <div class="tog-row">
+          <span class="tog-label">Threats</span>
+          <label class="tog-switch"><input type="checkbox" id="togThreats" checked><span class="tog-track"></span><span class="tog-thumb"></span></label>
+        </div>
+        <div class="tog-row">
+          <span class="tog-label">Momentum</span>
+          <label class="tog-switch"><input type="checkbox" id="togMomentum" checked><span class="tog-track"></span><span class="tog-thumb"></span></label>
+        </div>
+        <div class="tog-row">
+          <span class="tog-label">Last Move</span>
+          <label class="tog-switch"><input type="checkbox" id="togLastMove" checked><span class="tog-track"></span><span class="tog-thumb"></span></label>
+        </div>
+      </div>
+
+      <!-- Rules -->
+      <div class="rules">
+        <div class="rules-title">How to Play</div>
+        <ul>
+          <li>Get <b>6 in a row</b> on any axis to win</li>
+          <li>X plays <b>1 move</b> to open</li>
+          <li>Then players alternate <b>2 moves</b> each</li>
+          <li>4 in a row = <b>threat</b> (amber highlight)</li>
+          <li>Threats need <b>2 blocks</b> to neutralise</li>
+          <li>Drag to <b>pan</b> · scroll to <b>zoom</b></li>
+          <li>Press <b>U</b> to undo · <b>R</b> to re-centre</li>
+        </ul>
+      </div>
+
+    </aside>
+
+    <!-- Canvas area -->
+    <div class="canvas-wrap" id="canvasWrap">
+      <canvas id="gc"></canvas>
+
+      <button class="btn-center" id="btnCenter">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
+        </svg>
+        Centre
+      </button>
+
+      <div class="thinking-badge" id="thinkBadge">
+        <div class="thinking-dot"></div>
+        Bot is thinking…
+      </div>
+
+      <div class="online-turn-badge hidden" id="onlineTurnBadge">
+        <div class="thinking-dot" style="background:var(--oc)"></div>
+        Waiting for opponent…
+      </div>
+
+      <div class="hud hud-br">Drag · Scroll to zoom</div>
+      <div class="hud hud-bl">
+        <span class="legend-dot" style="background:#7C4A2D"></span>X
+        <span class="legend-dot" style="background:#2D5A7C"></span>O
+        <span class="legend-dot" style="background:rgba(192,134,10,.55)"></span>Threat
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Win modal -->
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <div class="modal-trophy" id="modalTrophy">🏆</div>
+      <div class="modal-title"  id="modalTitle">X Wins!</div>
+      <div class="modal-sub"    id="modalSub">Six in a row achieved.</div>
+      <div class="modal-btns">
+        <button class="mbtn primary" id="modalPlay">Play Again</button>
+        <button class="mbtn secondary" id="modalClose">View Board</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /viewGame -->
+
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
