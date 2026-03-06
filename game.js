@@ -872,8 +872,8 @@ function updateUI() {
 
   if (G.over) {
     const w = G.winLine.length ? G.cells[k(G.winLine[0][0],G.winLine[0][1])] : null;
-    subX.textContent = w==='X' ? '🏆 Winner!' : 'Game over';
-    subO.textContent = w==='O' ? '🏆 Winner!' : 'Game over';
+    subX.textContent = w==='X' ? 'Winner!' : 'Game over';
+    subO.textContent = w==='O' ? 'Winner!' : 'Game over';
     if (w==='X') cX.className += ' act-x';
     if (w==='O') cO.className += ' act-o';
     stEl.textContent = w ? `${w} wins!` : 'Game over';
